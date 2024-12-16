@@ -1,0 +1,15 @@
+{
+  "name": "youtubebackend",
+  "version": "1.0.0",
+  "description": "A backend with chai aur code channel | youutube",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javaScript",
+    "backend"
+  ],
+  "author": "Victor Khuraijam",
+  "license": "ISC"
+}
