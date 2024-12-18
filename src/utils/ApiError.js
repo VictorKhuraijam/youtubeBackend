@@ -3,9 +3,9 @@ class ApiError extends Error {
     statusCode,
     message = "Something went wrong",
     errors = [],
-    stack = ""
+    stack = "" // If not provided, the constructor generates one automatically.
   ){
-    super(message)
+    super(message) //Calls the constructor of the parent Error class with the provided message.
     this.statusCode = statusCode
     this.data = null
     this.message = message
@@ -16,6 +16,7 @@ class ApiError extends Error {
       this.stack = stack
     } else {
       Error.captureStackTrace(this, this.constructor)
+      //this.constructor: Ensures the stack trace starts from where the error was created.
     }
 
   }

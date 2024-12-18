@@ -141,3 +141,138 @@ asyncHandler(async (req, res, next) => {
 - `asyncHandler` is best used in applications with multiple asynchronous operations, such as database queries or third-party API calls.
 
 - It ensures that even if an error is thrown in asynchronous functions, it is handled properly without causing the application to crash.
+
+<br><br><br><br>
+
+
+
+# ApiError
+
+**What is a Stack Trace?**
+
+- A stack trace is a detailed report of the function calls that led to a specific point in the execution of a program.
+- It is primarily used for debugging and shows:
+  - The sequence of method/function calls at the time the error occurred.
+  - The exact file name and line number for each call in the chain.
+
+
+
+For example, when an error occurs, the stack trace might look like this:
+
+```js
+Error: User not found
+    at getUser (app.js:23)
+    at fetchUserDetails (app.js:15)
+    at main (app.js:30)
+    at Object.<anonymous> (app.js:35)
+```
+
+Here:
+
+- getUser, fetchUserDetails, and main are functions in the program.
+- Each line indicates where the error occurred, helping developers trace  the issue back to its source.
+
+**Stack Management in** `ApiError`
+
+ In your custom error class, the stack is either explicitly set or captured automatically:
+
+```js
+if (stack) {
+  this.stack = stack;
+} else {
+  Error.captureStackTrace(this, this.constructor);
+}
+```
+**1. Custom Stack Trace** (`stack`):
+
+- If a stack trace is explicitly passed to the constructor, it is assigned to the error object (`this.stack = stack;`).
+- This is useful if you want to propagate or customize an error's stack trace (e.g., when wrapping errors).
+
+**2. Automatic Stack Trace** (`Error.captureStackTrace`):
+
+- If no stack is provided, the built-in `Error.captureStackTrace` generates one.
+- The `Error.captureStackTrace(this, this.constructor)` ensures the stack trace:
+  - Starts from where the ApiError was created.
+  - Excludes the constructor itself from the trace, focusing only on the relevant calls.
+
+The stack property of the error object can then be logged or displayed for debugging.
+
+### `this.data` in `ApiError`
+
+**What does `this.data` Represent?**
+
+In the ApiError class, this.data is initialized as null:
+
+```js
+this.data = null;
+```
+
+The property is reserved for **custom additional information** that might be relevant to the error but doesn't fit into the standard `message`, `statusCode`, or `errors` fields.
+
+**Possible Uses of** `this.data`:
+
+**1. Dynamic Contextual Information:**
+
+- It can store dynamic data related to the error, such as:
+  - The current state of a variable.
+  - A partial result that caused the failure.
+- Example:
+```js
+throw new ApiError(500, "Database query failed", [], { query: "SELECT * FROM users WHERE id=1" });
+```
+
+**2. API Response Data:**
+
+- In some cases, you might want to return structured data back to the client to help them understand and debug the error:
+```js
+const error = new ApiError(422, "Validation failed");
+error.data = { field: "email", issue: "Invalid format" };
+throw error;
+```
+
+**3. Logging:**
+
+- `this.data` can hold additional details that aren't shown to the user but are useful for logging:
+```js
+const error = new ApiError(503, "Service Unavailable");
+error.data = { service: "UserService", retryAfter: 30 }; // Log internally
+throw error;
+```
+
+**Practical Example:**
+Here's how `this.data` might be used in a real-world scenario:
+```js
+async function fetchDataFromAPI(url) {
+  if (!url) {
+    const error = new ApiError(400, "URL is required");
+    error.data = { providedUrl: url };
+    throw error;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      const error = new ApiError(response.status, "Failed to fetch data");
+      error.data = { url, statusText: response.statusText };
+      throw error;
+    }
+    return response.json();
+  } catch (err) {
+    throw new ApiError(500, "Unexpected error occurred", [], err.stack);
+  }
+}
+```
+
+- When the client-side application receives the error, the `data` field could help pinpoint the issue (e.g., invalid URL, incorrect API endpoint).
+
+### Comparison of Key Properties
+
+|Property	 |Purpose	  |Example      |
+|----------|----------|-------------|
+|`statusCode`	|HTTP status code that represents the error.	`|404 for "Not Found".|
+|`message`	|A human-readable message describing the error.	|`"User not found"`.|
+|`errors`	|An array of additional error details, useful for validation or compound errors.	|["Invalid email format"].|
+|`stack`	|A trace of function calls leading to the error (debugging only).	|Function call chain with file/line numbers.|
+|`data`	|Custom data associated with the error, providing additional context.	|{ query: "SELECT * FROM users" }.|
+
+By combining these properties, `ApiError` provides a comprehensive way to represent errors with all the information needed for handling and debugging.
