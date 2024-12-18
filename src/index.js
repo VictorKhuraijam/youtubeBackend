@@ -2,7 +2,7 @@
 
   import 'dotenv/config'
   import connectDB from './db/index.js'
-import { app } from './app.js';
+  import { app } from './app.js';
 
   connectDB()
   .then(()=> {
@@ -29,11 +29,11 @@ import { app } from './app.js';
 /*
 before dotenv had import module restriction
 
-//require('dotenv').config({path: '/.env'})
+//require('dotenv').config({path: './.env'})
     or
  import dotenv from 'dotenv'
  dotenv.config({
-     path: '/.env'
+     path: './.env' // a dot before '/' to represent relative path meaning the current working directory
    })
 
 package.json file: "dev":"nodemon -r dotenv/config --experimental-json-modules src/index.js"
