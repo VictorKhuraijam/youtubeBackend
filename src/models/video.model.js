@@ -42,6 +42,8 @@ const videoSchema = new Schema(
 )
 
 videoSchema.plugin(mongooseAggregatePaginate)
+//Efficient handling of large datasets by splitting them into smaller, manageable chunks (pages).
+//Helps implement features like "Load More" or "Next Page" in APIs.
 
 
 export const Video = mongoose.model("Video", videoSchema)
