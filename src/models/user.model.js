@@ -58,7 +58,7 @@ userSchema.pre("save", async function(next){
     next(error); //pass error to Mongoose
   }
 });
-/*-The absence of an explicit return statement in the try block of the updated code is not problematic because the purpose of the pre("save") middleware is to execute asynchronous tasks and call the next() function to signal that the middleware has finished its job.
+/*-The absence of an explicit return statement in the try block is not problematic because the purpose of the pre("save") middleware is to execute asynchronous tasks and call the next() function to signal that the middleware has finished its job.
   -Middleware functions are not meant to return a value. Instead, they use next() to inform Mongoose that the operation is complete.
 */
 
