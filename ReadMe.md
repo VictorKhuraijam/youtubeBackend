@@ -644,3 +644,5 @@ For security, it’s typically recommended to:
 2. Require reauthentication once the refresh token expires.<br>
 3. Implement a **revocation mechanism** to handle stolen tokens.<br>
 4. Use **sliding expiration** cautiously in environments where user convenience is prioritized over strict security.<br>
+<br><br><br><br><br>
+
