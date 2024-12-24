@@ -1,7 +1,7 @@
 import {asyncHandler} from '../utils/asyncHandler.js'
 import {ApiError} from '../utils/ApiError.js'
 import {User} from '../models/user.model.js'
-import {uploadOnCloudinary} from '../utils/cloudinary.js'
+import {deleteFromCloudinary, uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
 
@@ -141,8 +141,16 @@ if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.leng
  const user = await User.create(
   {
     fullName,
-    avatar : avatar.url,
-    coverImage : coverImage?.url || "",
+    avatar :{
+      url: avatar.url,
+      public_id: avatar.public_id
+    },
+    ...(coverImage && {
+      coverImage: {
+        url: coverImage.url,
+        public_id: coverImage.public_id
+      }
+    }),//keep coverImage field in db is ommitted if there is no cover image
     email,
     password,
     username : username.toLowerCase()
@@ -352,7 +360,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading on cloudinary")
   }
 
-  /*
   const currentUser = await User.findById(req.user?._id);
 
   if (!currentUser) {
@@ -361,19 +368,20 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   // Delete the old avatar if it exists
   if (currentUser.avatar) {
-    const oldAvatarPublicId = extractPublicIdFromUrl(currentUser.avatar.public_id);
+    const oldAvatarPublicId =currentUser.avatar.public_id;
     if (oldAvatarPublicId) {
       await deleteFromCloudinary(oldAvatarPublicId);
     }
   }
 
-  */
-
  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        avatar: avatar.url
+        avatar: {
+          url: avatar.url,
+          public_id: avatar.public_id
+        }
       }
     },
     {new: true}
@@ -384,7 +392,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   .json(new ApiResponse(200, user, "avatar updated successfully" ))
 
 
-})// check later for deletion of avatar when updating
+})
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path
@@ -399,11 +407,28 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading on cloudinary")
   }
 
+  const currentUser = await User.findById(req.user?._id);
+
+  if (!currentUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+   // Delete the old avatar if it exists
+   if (currentUser.coverImage) {
+    const oldCoverImagePublicId =currentUser.coverImage.public_id;
+    if (oldCoverImagePublicId) {
+      await deleteFromCloudinary(oldCoverImagePublicId);
+    }
+  }
+
  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        coverImage: coverImage.url
+        coverImage: {
+          url: coverImage.url,
+          public_id: coverImage.public_id
+        }
       }
     },
     {new: true}
