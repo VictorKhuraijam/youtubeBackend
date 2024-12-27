@@ -21,7 +21,7 @@ export const verifyJWT = asyncHandler(async (req, _ , next) => {
   }
   //The jwt.verify function is synchronous and will throw an error if the token is invalid, expired, or cannot be verified for any other reason. Errors thrown synchronously won't be caught by the asyncHandler because asyncHandler only catches errors returned as rejected promises.
 
-  const user = await User.findById(decodedToken._id).select("-password -refreshToken")
+  const user = await User.findById(decodedToken._id).select("-password -refreshToken -avatar.public_id -coverImage.public_id")
 
   if(!user){
     //discuss about frontend

@@ -14,8 +14,15 @@ const options = {
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
+
+
 
     user.refreshToken = refreshToken
     await user.save({validateBeforeSave: false})//skips schema validation
@@ -160,7 +167,7 @@ if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.leng
 
  //remove password and refresh Token from response
  const createdUser = await User.findById(user._id).select(
-  '-password -refreshToken'
+  '-password -refreshToken -avatar.public_id -coverImage.public_id'
  )
 
  //check for user creation
@@ -206,7 +213,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id)
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken -avatar.public_id -coverImage.public_id")
 
   return res
   .status(200)
@@ -269,18 +276,23 @@ const refreshAccessToken = asyncHandler(async(req, res) => {
       throw new ApiError(401, "Refresh Token is expired or used")
     }
 
-    const {accessToken, newRefreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+    // const {accessToken, newRefreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+    //destructure error since it should match the destructure property name accessToken and refreshToken
+
+    const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+
+
 
     return res
     .status(200)
     .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", newRefreshToken, options)
+    .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(
         200,
         {
           accessToken,
-          refreshToken : newRefreshToken
+          refreshToken
         },
         "Access token refreshed"
       )
@@ -327,7 +339,7 @@ const getCurrentUser = asyncHandler(async(req, res) => {
 const updateAccountDetails = asyncHandler(async(req, res) => {
   const {fullName, email} = req.body
 
-  if(!fullName && !email){
+  if(!fullName || !email){
     throw new ApiError(400, "All fields are required")
   }
 
@@ -340,7 +352,7 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
       }
     },
     {new: true}
-  ).select("-password -refreshToken")
+  ).select("-password -refreshToken -avatar.public_id -coverImage.public_id")
 
   return res
   .status(200)
@@ -386,7 +398,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
       }
     },
     {new: true}
-  ).select("-password -refreshToken")
+  ).select("-password -refreshToken -avatar.public_id -coverImage.public_id")
 
   return res
   .status(200)
@@ -433,7 +445,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       }
     },
     {new: true}
-  ).select("-password -refreshToken")
+  ).select("-password -refreshToken -avatar.public_id -coverImage.public_id")
 
   return res
   .status(200)
@@ -444,7 +456,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const {username} = req.params
-  console.log(req.params)
+  // console.log(req.params)
 
   if (!username?.trim()) {
     throw new ApiError(400, "username is missing")
@@ -491,18 +503,23 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
+        _id: 0, //to exclude
         fullName: 1,
         username: 1,
         subscribersCount: 1,
         channelsSubscribedToCount: 1,
         isSubscribed: 1,
-        avatar: 1,
-        coverImage: 1,
+        avatar: {
+          url: 1
+        },
+        coverImage: {
+          url: 1
+        },
         email: 1,
       }
     }
   ])
-  console.log(channel)
+  // console.log(channel)
 
   if (!channel.length) {
     throw new ApiError(404, "Channel does not exists")
@@ -520,7 +537,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = User.aggregate([
     {
       $match: {
-        _id: mongoose.Types.ObjectId(req.user._id)
+        _id: new mongoose.Types.ObjectId(req.user._id)
       }
     },
     {
@@ -566,7 +583,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   .json(
     new ApiResponse(
       200,
-      user[0].watchHistory,
+      user[0]?.watchHistory || [],
       "Watch history fetched successfully"
     )
   )
