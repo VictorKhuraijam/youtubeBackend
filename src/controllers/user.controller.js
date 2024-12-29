@@ -142,7 +142,7 @@ if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.leng
  const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
  if(!avatar){
-   throw new ApiError(409, "Avatar file is not uploaded on cloudinary")
+   throw new ApiError(500, "Avatar file is not uploaded on cloudinary")
  }
 
  //create user object - DB entry
@@ -177,7 +177,7 @@ if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.leng
 
  //return the response
  return res.status(201).json(
-  new ApiResponse(200, createdUser , "User registered successfully")
+  new ApiResponse(201, createdUser , "User registered successfully")
  )
 
 

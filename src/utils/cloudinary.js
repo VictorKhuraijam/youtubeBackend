@@ -31,7 +31,7 @@ const deleteFromCloudinary = async (publicId) => {
     if (!publicId) throw new ApiError(500,"Public ID is required for deletion from cloudinary");
 
     const response = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image", // Specify the type if required (e.g., "image", "video", etc.)
+      resource_type: resourceType, // Specify the type if required (e.g., "image", "video", etc.)
     });
 
     // Check if deletion was successful

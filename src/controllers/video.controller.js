@@ -10,22 +10,19 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
 
-  // Validate input
-  if (!query && !userId) {
-    throw new ApiError(400, "Either 'query' or 'userId' must be provided");
-  }
-
    // Match Stage
    const matchStage = {};
    if (query) {
      matchStage.title = { $regex: query, $options: "i" }; // Case-insensitive search
    }
-   if (userId) {
+   if (userId && isValidObjectId(userId)) {
      matchStage.owner = new mongoose.Types.ObjectId(userId); // Filter by userId
    }
+   console.log('Match Stage:', matchStage);
+
 
   // Aggregation Pipeline
-  const video = await Video.aggregate(
+  const pipeline =
     [
       {
         $match:  matchStage // Filters
@@ -54,11 +51,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
         $sort: sortBy
         ? { [sortBy]: sortType === "desc" ? -1 : 1 }
         : { createdAt: -1 }, // Default sorting
-      }, 
+      },
       {
           $project: {
-              videoFile: 1,
-              thumbnail: 1,
+              videoFile: {
+                url: 1
+              },
+              thumbnail: {
+                url: 1
+              },
               title: 1,
               description: 1,
               duration: 1,
@@ -68,7 +69,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
               createdAt: 1,
           },
       },
-  ]);
+  ];
+
 
   // Pagination with `mongooseAggregatePaginate`
   const options = {
@@ -76,8 +78,28 @@ const getAllVideos = asyncHandler(async (req, res) => {
       limit: parseInt(limit, 10),
   };
 
-  const result = await Video.aggregatePaginate(video, options);
 
+  try {
+    // Use pipeline directly with `aggregatePaginate`
+  const  result = await Video.aggregatePaginate(Video.aggregate(pipeline), options);
+    // Mongoose aggregation pipeline object as its first argument, not the result of Video.aggregate(...)
+
+    // Check if no videos are found
+   if (result.docs.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          videos: [], // Empty array for videos
+          total: result.totalDocs, // Should be 0
+          page: result.page, // Current page
+          totalPages: result.totalPages, // Should be 0
+          limit: result.limit, // Limit per page
+        },
+        "No videos found"
+      )
+    );
+  }
 
   res.status(200).json(
     new ApiResponse(
@@ -88,18 +110,76 @@ const getAllVideos = asyncHandler(async (req, res) => {
         page: result.page, // Current page
         totalPages: result.totalPages, // Total number of pages
         limit: result.limit, // Limit per page
-    },
-    "Videos fetched successfully"
+      },
+      "Videos fetched successfully"
     )
   );
+
+  } catch (error) {
+    console.error("Pagination Error:", error);
+    res.status(500).json(new ApiResponse(500, null, "An error occurred during pagination"));
+  }
+
 });
 
-
-
-
 const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description} = req.body
-    // TODO: get video, upload to cloudinary, create video
+ const { title, description} = req.body
+ // TODO: get video, upload to cloudinary, create video
+
+ //get a video
+
+ const videoFileLocalPath = req.files?.videoFile[0]?.path ;
+ const thumbnailLocalPath = req.files?.thumbnail[0]?.path ;
+
+ if(!videoFileLocalPath && !thumbnailLocalPath ){
+  throw new ApiError(408, "Both Video file and thumbnail is required")
+ }
+
+ //upload on cloudinary and check if video and thumbnail is uploaded successfully
+ const videoFile = await uploadOnCloudinary(videoFileLocalPath)
+ const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+
+
+
+ if(!videoFile && !thumbnail ){
+  throw new ApiError(500, "Video or thumbnail is not uploaded on cloudinary")
+}
+
+const video = await Video.create(
+  {
+    videoFile: {
+      url: videoFile.url,
+      public_id: videoFile.public_id
+    },
+    thumbnail: {
+      url: thumbnail.url,
+      public_id: thumbnail.public_id
+    },
+    title,
+    description,
+    duration: videoFile.duration,    // Duration of the video (required, from Cloudinary)
+    views: 0,                 // Initial views (default: 0)
+    isPublished: true,        // Set as published by default
+    owner: req.user?._id,
+
+  }
+)
+
+//remove password and refresh Token from response
+const createdvideo = await Video.findById(video._id).select(
+  '-videoFile.public_id -thumbnail.public_id'
+ )
+
+//check for user creation
+if(!createdvideo){
+  throw new ApiError(500, "Something went wrong while registering the video")
+ }
+
+ //return the response
+ return res.status(201).json(
+  new ApiResponse(201, createdvideo , "Video published successfully")
+ )
+
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
