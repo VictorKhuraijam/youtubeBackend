@@ -31,15 +31,33 @@ const deleteFromCloudinary = async (publicId) => {
     if (!publicId) throw new ApiError(500,"Public ID is required for deletion from cloudinary");
 
     const response = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType, // Specify the type if required (e.g., "image", "video", etc.)
+      resource_type: "image", // Specify the type if required (e.g., "image", "video", etc.)
     });
 
     // Check if deletion was successful
     if (response.result === "ok" || response.result === "not found") {
-      console.log(`File with public ID ${publicId} was deleted:`, response);
       return response;
     } else {
-      console.error(`Failed to delete file with public ID ${publicId}:`, response);
+      return null;
+    }
+  } catch (error) {
+    throw new ApiError(500,"Error deleting file from Cloudinary")
+  }
+};
+
+
+const deleteFromCloudinaryVideo = async (publicId) => {
+  try {
+    if (!publicId) throw new ApiError(500,"Public ID is required for deletion from cloudinary");
+
+    const response = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "video", // Specify the type if required (e.g., "image", "video", etc.)
+    });
+
+    // Check if deletion was successful
+    if (response.result === "ok" || response.result === "not found") {
+      return response;
+    } else {
       return null;
     }
   } catch (error) {
@@ -51,7 +69,8 @@ const deleteFromCloudinary = async (publicId) => {
 
 export {
   uploadOnCloudinary,
-  deleteFromCloudinary
+  deleteFromCloudinary,
+  deleteFromCloudinaryVideo
 }
 
 /*
