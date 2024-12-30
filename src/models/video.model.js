@@ -57,5 +57,10 @@ videoSchema.plugin(aggregatePaginate)
 //Efficient handling of large datasets by splitting them into smaller, manageable chunks (pages).
 //Helps implement features like "Load More" or "Next Page" in APIs.
 
+videoSchema.pre("remove", async function (next) {
+  await mongoose.model("Comment").deleteMany({ video: this._id });
+  next();
+});
+//Deletes the comment relating to the video when the video is deleted to avoid orphaned comments
 
 export const Video = mongoose.model("Video", videoSchema)

@@ -1,6 +1,5 @@
 import mongoose, {isValidObjectId} from "mongoose"
 import {Video} from "../models/video.model.js"
-import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -71,13 +70,11 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
   ];
 
-
   // Pagination with `mongooseAggregatePaginate`
   const options = {
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
   };
-
 
   try {
     // Use pipeline directly with `aggregatePaginate`

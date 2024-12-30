@@ -709,3 +709,37 @@ const channel = await User.aggregate([
 - The additional fields (`subscribersCount`, `channelsSubscribedToCount`, `isSubscribed`) are **not stored** in the database.
 - They are **computed dynamically** when the `getUserChannelProfile` endpoint is executed.
 - The database remains unchanged; the result exists only as an **in-memory object** that is sent as the response to the client.
+
+
+
+## Another example
+
+```js
+            {
+                $lookup: {
+                    from: "users", // Ensure the "users" collection name matches
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerDetails",
+                    pipeline: [
+                      {
+                          $project: {
+                              fullName: 1,
+                              username: 1,
+                              avatar: {
+                                url: 1
+                              },
+                          },
+                      },
+                  ],
+                },
+
+            },
+            { $addFields: { owner: { $first: "$owner" } } }, // Flatten owner array
+
+```
+
+### `$addFields`
+- The `$addFields` stage is used to transform the owner field from an array to a single object by applying `$first`.
+- `$first` extracts the first element from an array, and `$addFields` replaces the original owner array with that single object.
+- This flattening simplifies the document structure, making it easier to work with in subsequent stages of the aggregation pipeline or when returning the data.
