@@ -1,4 +1,5 @@
 import mongoose, {Schema} from "mongoose";
+import aggregatePaginate from 'mongoose-aggregate-paginate-v2'
 
 
 const tweetSchema = new Schema(
@@ -14,6 +15,8 @@ const tweetSchema = new Schema(
   },
   {timestamps: true}
 )
+
+tweetSchema.plugin(aggregatePaginate)
 
 tweetSchema.pre("remove", async function (next) {
   await mongoose.model("Comment").deleteMany({ tweet: this._id });

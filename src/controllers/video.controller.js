@@ -31,7 +31,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
               from: "users", // User collection
               localField: "owner",
               foreignField: "_id",
-              as: "owner",
+              as: "userDetails",
               pipeline: [
                   {
                       $project: {
@@ -45,7 +45,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
               ],
           },
       },
-      { $addFields: { owner: { $first: "$owner" } } }, // Flatten owner array
+      { $addFields: { userDetails: { $first: "$userDetails" } } }, // Flatten owner array
       {
         $sort: sortBy
         ? { [sortBy]: sortType === "desc" ? -1 : 1 }
