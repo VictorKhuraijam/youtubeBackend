@@ -316,10 +316,94 @@ return res
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+
+    const {commentId} = req.params
+    const{content, replyTo} = req.body
+    const userId = req.user._id
+
+    if(!commentId){
+      throw new ApiError(404, "Comment Id not found")
+    }
+
+    if(!userId){
+      throw new ApiError(401, "Unauthorized user access")
+    }
+
+    if (!content || content.trim() === "") {
+      throw new ApiError(400, "Content cannot be empty.");
+    }
+
+     // Find the comment and verify ownership
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      throw new ApiError(404, "Comment not found");
+    }
+
+    if (comment.owner.toString() !== userId.toString()) {
+      throw new ApiError(401, "You do not have permission to update this comment");
+    }
+
+    const updateComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $set: {
+          content,
+          replyTo: replyTo || null
+        },
+      },
+      {new: true}
+    )
+
+    return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updateComment,
+        "Comment updated"
+      )
+    )
+
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
+
+    const {commentId} = req.params
+    const userId = req.user._id
+
+    if(!commentId){
+      throw new ApiError(404, " Comment Id not found")
+    }
+
+    if(!userId){
+      throw new ApiError(401, "User ID not found")
+    }
+
+      // Find the comment to ensure it exists and validate ownership
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      throw new ApiError(404, "Comment not found");
+    }
+
+    if(comment.owner.toString() !== userId.toString()){
+      throw new ApiError(401, "User is not authorized to delete the comment")
+    }
+
+    await Comment.findByIdAndDelete(commentId)
+
+    return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          Success: true,
+          Data: null
+        },
+        "Comment successfully deleted"
+      )
+    )
 })
 
 export {
