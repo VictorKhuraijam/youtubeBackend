@@ -390,7 +390,7 @@ const deleteComment = asyncHandler(async (req, res) => {
       throw new ApiError(401, "User is not authorized to delete the comment")
     }
 
-    await Comment.findByIdAndDelete(commentId)
+    await comment.deleteOne()
 
     return res
     .status(200)

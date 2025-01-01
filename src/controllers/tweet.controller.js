@@ -1,6 +1,5 @@
-import mongoose, { isValidObjectId } from "mongoose"
+
 import {Tweet} from "../models/tweet.model.js"
-import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -280,7 +279,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
       throw new ApiError(403, "You are not authorized to update this tweet");
     }
 
-    await Tweet.findByIdAndDelete(tweetId)
+    await tweet.deleteOne()
 
     return res
     .status(200)
