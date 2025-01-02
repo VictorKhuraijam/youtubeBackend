@@ -25,11 +25,15 @@ const videoSchema = new Schema(
     },
     title: {
       type: String,
-      required: true
+      required: true,
+      minlength: 3,
+      maxlength: 100,
     },
     description: {
       type: String,
-      required: true
+      required: true,
+      minlength: 10,
+      maxlength: 500,
     },
     duration: {  // will get it from cloudinary
       type: Number,
@@ -45,7 +49,8 @@ const videoSchema = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: "User"
+      ref: "User",
+      index: true,
     }
   },
   {
@@ -59,8 +64,13 @@ videoSchema.plugin(aggregatePaginate)
 
 videoSchema.pre("remove", async function (next) {
   await mongoose.model("Comment").deleteMany({ video: this._id });
+
+  await mongoose.model("Like").deleteMany({ video: this._id });
   next();
 });
 //Deletes the comment relating to the video when the video is deleted to avoid orphaned comments
+
+//Deletes the likes relating to the video when the video is deleted to avoid orphaned likes
+
 
 export const Video = mongoose.model("Video", videoSchema)

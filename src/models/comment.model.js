@@ -42,6 +42,7 @@ commentSchema.pre("save", async function (next) {
 
 commentSchema.pre("remove", async function (next) {
   await mongoose.model("Comment").deleteMany({ replyTo: this._id });
+  await mongoose.model("Like").deleteMany({ comment: this._id });
   next();
 });//If a video, tweet, or parent comment is deleted, associated comments will be deleted.
 

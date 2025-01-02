@@ -20,6 +20,7 @@ tweetSchema.plugin(aggregatePaginate)
 
 tweetSchema.pre("remove", async function (next) {
   await mongoose.model("Comment").deleteMany({ tweet: this._id });
+  await mongoose.model("Like").deleteMany({ tweet: this._id });
   next();
 });
 //Deletes the comment relating to the tweet when the tweet is deleted to avoid orphaned comments
