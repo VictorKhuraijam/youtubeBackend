@@ -6,6 +6,7 @@ import {
     updateVideo,
     deleteVideo,
     togglePublishStatus,
+    updateViewCount,
 } from "../controllers/video.controller.js"
 import {verifyJWT} from "../middlewares/auth.middleware.js"
 import {upload} from "../middlewares/multer.middleware.js"
@@ -33,6 +34,7 @@ router
 
 router
     .route("/:videoId")
+    .post(updateViewCount)//POST makes more sense because it's more about triggering an action than modifying the resource directly.
     .get(getVideoById)
     .delete(deleteVideo)
     .patch(upload.single("thumbnail"), updateVideo);
@@ -40,3 +42,8 @@ router
 router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
 
 export default router
+
+/*
+PATCH: Use if you're partially updating a resource. Example: updating the title or description of a video.
+POST: Use if you're triggering an event or adding something to the resource (e.g., incrementing views or likes).
+*/

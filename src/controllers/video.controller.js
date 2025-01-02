@@ -81,36 +81,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
   const  result = await Video.aggregatePaginate(Video.aggregate(pipeline), options);
     // Mongoose aggregation pipeline object as its first argument, not the result of Video.aggregate(...)
 
-    // Check if no videos are found
-   if (result.docs.length === 0) {
-    return res.status(200).json(
+    return  res.status(200).json(
       new ApiResponse(
         200,
         {
-          videos: [], // Empty array for videos
-          total: result.totalDocs, // Should be 0
+          videos: result.docs, // Paginated data
+          total: result.totalDocs, // Total number of matching videos
           page: result.page, // Current page
-          totalPages: result.totalPages, // Should be 0
+          totalPages: result.totalPages, // Total number of pages
           limit: result.limit, // Limit per page
         },
-        "No videos found"
+        result.docs.length > 0
+        ? "Videos fetched successfully"
+        : "No videos found"
       )
     );
-  }
-
-  return  res.status(200).json(
-    new ApiResponse(
-      200,
-      {
-        videos: result.docs, // Paginated data
-        total: result.totalDocs, // Total number of matching videos
-        page: result.page, // Current page
-        totalPages: result.totalPages, // Total number of pages
-        limit: result.limit, // Limit per page
-      },
-      "Videos fetched successfully"
-    )
-  );
 
   } catch (error) {
     console.error("Pagination Error:", error);
@@ -305,11 +290,39 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
 })
 
+const updateViewCount = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  // Find the video by its ID
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+     throw new ApiError(500, "Video not found")
+  }
+
+  // Increment the view count
+  video.views += 1;
+
+  // Save the updated video
+  await video.save({validateBeforeSave: false});
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+    {  views: video.views },
+    "View count updated"
+    )
+  )
+});
+
 export {
     getAllVideos,
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    updateViewCount
 }
