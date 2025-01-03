@@ -20,4 +20,4 @@ const subcriptionSchema = new Schema(
 
 subcriptionSchema.plugin(aggregatePaginate)
 
-export const Subcription = mongoose.model("Subcription", subcriptionSchema)
+export const Subscription = mongoose.model("Subscription", subcriptionSchema)

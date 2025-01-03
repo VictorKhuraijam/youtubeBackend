@@ -149,7 +149,8 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
           totalPages: subscriptions.totalPages,
           totalDocs: subscriptions.totalDocs
         },
-        "subscriptions fetched successfully"
+        subscriptions.docs.length === 0 ? "No subscribers yet"
+        : "subscriptions fetched successfully"
       )
     );
 })
@@ -161,7 +162,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     const userId = req.user._id
 
     if(!subscriberId){
-        throw new ApiError(400, "Channel Id required")
+        throw new ApiError(400, "Subscribed Id required")
     }
 
     if(!userId){
@@ -208,7 +209,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         {
             $group: {
                 _id: "$subscriber", // Group by subscriber ID
-                subscribedTo: { $push: { $arrayElemAt: ["$channel", 0] } }, // Flatten the channel array
+                subscribedTo: { $push: "$channel" }, // Flatten the channel array
                 subscribedToCount: { $sum: 1 } // Count the number of channel
             } // for one line subscribedTo count and an array of channel
         },

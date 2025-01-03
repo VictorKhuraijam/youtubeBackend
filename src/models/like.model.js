@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../utils/ApiError.js";
 
 
 const likeSchema = new Schema(

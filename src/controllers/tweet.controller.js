@@ -32,7 +32,6 @@ const createTweet = asyncHandler(async (req, res) => {
     .json(new ApiResponse(
       201,
       {
-        success: true,
         data: newTweet
       },
       "A new Tweet has been  created"
