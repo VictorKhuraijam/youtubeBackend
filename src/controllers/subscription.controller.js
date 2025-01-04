@@ -209,7 +209,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         {
             $group: {
                 _id: "$subscriber", // Group by subscriber ID
-                subscribedTo: { $push: "$channel" }, // Flatten the channel array
+                subscribedTo: { $push:{ $arrayElemAt: ["$subscribedTo", 0] } }, // Flatten the channel array
                 subscribedToCount: { $sum: 1 } // Count the number of channel
             } // for one line subscribedTo count and an array of channel
         },
@@ -234,13 +234,13 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          success: true,
           data: subscribedTo.docs,
           currentPage: subscribedTo.page,
           totalPages: subscribedTo.totalPages,
           totalDocs: subscribedTo.totalDocs
         },
-        "Subscribed channel fetched successfully"
+        subscribedTo.docs.length === 0 ? "No subscribers yet"
+        :"Subscribed channel fetched successfully"
       )
     );
 })

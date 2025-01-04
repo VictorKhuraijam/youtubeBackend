@@ -743,3 +743,193 @@ const channel = await User.aggregate([
 - The `$addFields` stage is used to transform the owner field from an array to a single object by applying `$first`.
 - `$first` extracts the first element from an array, and `$addFields` replaces the original owner array with that single object.
 - This flattening simplifies the document structure, making it easier to work with in subsequent stages of the aggregation pipeline or when returning the data.
+
+
+## More aggregate example
+
+```js
+        {
+            $lookup:{
+                from: "users", // The name of the user collection
+                localField: "channel", // The field in the subscription model
+                foreignField: "_id", // The field in the user model
+                as: "subscribedTo",
+                pipeline: [
+                    {
+                        $project: {
+                            fullName: 1,
+                            username: 1,
+                            avatar: {
+                              url: 1
+                            },
+                        },
+                    },
+                  ],
+            }
+        },
+        {
+            $group: {
+                _id: "$subscriber", // Group by subscriber ID
+                subscribedTo: { $push:{ $arrayElemAt: ["$subscribedTo", 0] } }, // Flatten the channel array
+                subscribedToCount: { $sum: 1 } // Count the number of channel
+            } // for one line subscribedTo count and an array of channel
+        },
+        {
+            $project: {
+                subscribedTo: 1,
+                subscribedToCount: 1
+            }
+        }
+```
+
+### `$lookup` Stage
+```js
+{
+    $lookup: {
+        from: "users", // The collection name to join with.
+        localField: "channel", // The field in the current collection (subscriptions) to match.
+        foreignField: "_id", // The field in the joined collection (users) to match against.
+        as: "subscribedTo", // The name of the array field to store the joined data.
+        pipeline: [
+            {
+                $project: {
+                    fullName: 1, // Include the user's full name.
+                    username: 1, // Include the user's username.
+                    avatar: {
+                        url: 1 // Include only the `url` field of the user's avatar.
+                    }
+                }
+            }
+        ]
+    }
+}
+```
+
+### What It Does:
+1. **Joins Collections**:
+
+    - This stage performs a left outer join between the subscriptions collection and the users collection.
+    - It matches the channel field from the subscriptions collection with the _id field in the users collection.
+2. **Customizes the Result**:
+
+    - The pipeline option refines the joined users data by projecting only specific fields: fullName, username, and the url field of avatar.
+
+3. **Stores in an Array**:
+
+    - The resulting user data is stored in an array named subscribedTo.
+<br><br><br>
+---
+<br>
+
+### `$group` Stage
+```js
+{
+    $group: {
+        _id: "$subscriber", // Groups documents by the `subscriber` field.
+        subscribedTo: { $push: { $arrayElemAt: ["$subscribedTo", 0] } }, // Flattens the first element of `subscribedTo` into an array.
+        subscribedToCount: { $sum: 1 } // Counts the number of documents for each subscriber.
+    }
+}
+```
+
+### What It Does:
+
+1. **Groups by Subscriber**:
+
+    - All documents with the same `subscriber` value are grouped together. The `_id` field in the output represents the `subscriber`.
+
+2. **Flattens subscribedTo**:
+
+    - `$push` adds an element to the `subscribedTo` array for the current group.
+   - `$arrayElemAt: ["$subscribedTo", 0]` extracts the first element of the `subscribedTo` array (the user details from the `$lookup` stage).
+   - This effectively flattens the subscribedTo array so that it contains individual user objects instead of nested arrays.
+
+3. **Counts Channels**:
+
+    - `$sum: 1` increments the `subscribedToCount` for each document in the group, resulting in the total number of channels to which the subscriber is subscribed.
+<br><br>
+---
+<br>
+
+### `$project` Stage
+```js
+{
+    $project: {
+        subscribedTo: 1, // Retains the `subscribedTo` array in the output.
+        subscribedToCount: 1 // Retains the `subscribedToCount` field in the output.
+    }
+}
+```
+
+### What It Does:
+
+1. **Selects Fields**:
+    - Keeps only the subscribedTo and subscribedToCount fields in the output.
+    - Excludes any other fields from the grouped result.
+<br><br>
+---
+<br>
+
+### Example Input Data
+
+**Subscriptions Collection**:
+```json
+
+[
+    { "subscriber": "user1", "channel": "channel1" },
+    { "subscriber": "user1", "channel": "channel2" }
+]
+```
+
+**Users Collection**:
+```json
+
+[
+    {
+       "_id": "channel1",
+       "fullName": "John Doe",
+       "username": "johndoe",
+       "avatar": { "url": "avatar1.jpg" }
+    },
+    {
+      "_id": "channel2",
+      "fullName": "Jane Smith",
+      "username": "janesmith",
+      "avatar": { "url": "avatar2.jpg" }
+    }
+]
+```
+<br><br>
+---
+<br>
+
+
+## Output After Aggregation
+```json
+
+[
+    {
+        "_id": "user1",
+        "subscribedTo": [
+            {
+                "fullName": "John Doe",
+                "username": "johndoe",
+                "avatar": { "url": "avatar1.jpg" }
+            },
+            {
+                "fullName": "Jane Smith",
+                "username": "janesmith",
+                "avatar": { "url": "avatar2.jpg" }
+            }
+        ],
+        "subscribedToCount": 2
+    }
+]
+```
+
+## Key Points:
+1. The `$lookup` retrieves user details for each `channel` in the `subscriptions` collection.<br>
+
+2. The `$group` aggregates the results by `subscriber`, flattening and collecting user details in the `subscribedTo` array.<br>
+
+3. The `$project` ensures that only the relevant fields (`subscribedTo` and `subscribedToCount`) are included in the final output.
