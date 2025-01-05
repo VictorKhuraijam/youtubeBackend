@@ -182,7 +182,6 @@ const deletePlaylist = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          success: true,
           data: null
         },
         "Playlist deleted"

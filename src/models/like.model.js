@@ -8,19 +8,17 @@ const likeSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Video",
       index: true,
-      default: null
+
     },
     comment: {
       type: Schema.Types.ObjectId,
       ref: "Comment",
       index: true,
-      default: null
     },
     tweet: {
       type: Schema.Types.ObjectId,
       ref: "Tweet",
       index: true,
-      default: null
     },
     likedBy: {
       type: Schema.Types.ObjectId,
@@ -30,6 +28,27 @@ const likeSchema = new Schema(
   },
   {timestamps: true}
 );
+
+// Custom validation to ensure only one entity type is liked
+
+likeSchema.pre("save", function (next) {
+  if ((this.video && this.comment) ||
+  (this.video && this.tweet) ||
+  (this.comment && this.tweet)) {
+throw new ApiError(400, "A like must reference exactly one entity (video, comment, or tweet).");
+}
+
+if (!this.video && !this.comment && !this.tweet) {
+throw new ApiError(400, "A like must reference at least one entity (video, comment, or tweet).");
+}
+
+
+  next();
+});
+
+export const Like = mongoose.model("Like", likeSchema)
+
+/*
 
 // Custom validation to ensure only one entity type is liked
 likeSchema.pre("save", function (next) {
@@ -44,5 +63,4 @@ likeSchema.pre("save", function (next) {
 
   next();
 });
-
-export const Like = mongoose.model("Like", likeSchema)
+*/

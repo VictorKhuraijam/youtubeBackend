@@ -175,7 +175,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     const likedVideos = await Like.find(
       { likedBy: userId, video: { $exists: true } }, // Query to match liked videos by the user
       { video: 1, _id: 0 } // Projection to include only 'video' field in the result
-    ).populate("video")
+    ).populate("video").select("-videoFile.public_id -thumbnail.public_id")
 
     if (!likedVideos.length) {
       return res.status(404).json(
