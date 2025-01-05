@@ -13,11 +13,11 @@ const router = Router();
 
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
-router.route("/:videoId")
+router.route("/videos/:videoId")
       .get(getVideoComments)
       .post(addCommentToVideo);
 
-router.route("/:tweetId")
+router.route("/tweets/:tweetId")
       .get(getTweetComments)
       .post(addCommentToTweet);
 

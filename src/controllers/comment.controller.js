@@ -20,7 +20,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         const commentPipeline = [
             {
                 $match: {
-                    video: videoId
+                  video: new mongoose.Types.ObjectId(videoId)
                 }
             },
             {
@@ -73,13 +73,13 @@ const getVideoComments = asyncHandler(async (req, res) => {
           new ApiResponse(
             200,
             {
-              success: true,
               data: comments.docs,
               currentPage: comments.page,
               totalPages: comments.totalPages,
               totalDocs: comments.totalDocs
             },
-            "Video comment fetched successfully"
+            comments.docs.length === 0 ? "No comments yet"
+            : "Video comment fetched successfully"
           )
         );
 
@@ -97,11 +97,10 @@ const getTweetComments = asyncHandler(async (req, res) => {
      }
 
   // Query for comments
-
       const tweetPipeline = [
           {
               $match: {
-                  tweet: tweetId
+                tweet: new mongoose.Types.ObjectId(tweetId)
               }
           },
           {
@@ -127,7 +126,6 @@ const getTweetComments = asyncHandler(async (req, res) => {
                     },
                 ],
               },
-
           },
           { $addFields: { owner: { $first: "$owner" } } }, // Flatten owner array
           {
@@ -154,13 +152,13 @@ const getTweetComments = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           {
-            success: true,
             data: comments.docs,
             currentPage: comments.page,
             totalPages: comments.totalPages,
             totalDocs: comments.totalDocs
           },
-          "Comment for tweet fetched successfully"
+          comments.docs === 0 ? "No comments yet"
+                              : "Comment for tweet fetched successfully"
         )
       );
 
@@ -214,15 +212,15 @@ const addCommentToVideo = asyncHandler(async (req, res) => {
       },
     },
     { $addFields: { owner: { $first: "$owner" } } }, // Flatten owner array
-      {
-        $project: {
-          content: 1,
-          video: 1,
-          replyTo: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          owner: 1
-        },
+    {
+      $project: {
+        content: 1,
+        video: 1,
+        replyTo: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        owner: 1
+      },
       },
     ]);
 
@@ -235,7 +233,7 @@ const addCommentToVideo = asyncHandler(async (req, res) => {
               success: true,
               data: populatedComment[0],
           },
-          "Comment added successfully."
+          "Video comment added successfully."
       )
     )
 })
@@ -287,17 +285,20 @@ const populatedComment = await Comment.aggregate([
     },
   },
   { $addFields: { owner: { $first: "$owner" } } }, // Flatten owner array
-    {
-      $project: {
-        content: 1,
-        tweet: 1,
-        replyTo: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        owner: 1
-      },
+  {
+    $project: {
+      content: 1,
+      tweet: 1,
+      replyTo: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      owner: 1,
+
     },
+  },
   ]);
+
+
 
 return res
 .status(201)
@@ -305,14 +306,12 @@ return res
     new ApiResponse(
         201,
         {
-            success: true,
             data: populatedComment[0],
         },
-        "Comment added successfully."
+        "Tweet comment added successfully."
     )
   )
 })
-
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
