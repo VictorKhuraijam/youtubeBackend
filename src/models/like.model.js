@@ -42,8 +42,6 @@ if (!this.video && !this.comment && !this.tweet) {
 throw new ApiError(400, "A like must reference at least one entity (video, comment, or tweet).");
 }
 
-
-  next();
 });
 
 export const Like = mongoose.model("Like", likeSchema)
