@@ -1,4 +1,8 @@
 <!--&nbsp; - non-breaking space    -->
+# Proprietary
+- [Chai Backend](https://github.com/hiteshchoudhary/chai-backend/tree/main) by [Hitesh Choudhary](https://www.youtube.com/@chaiaurcode)
+- [Model](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj)
+
 
 # Aggregation Pipelines in MongoDB
 
