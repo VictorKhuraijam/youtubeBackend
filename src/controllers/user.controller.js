@@ -59,15 +59,14 @@ const registerUser = asyncHandler(async (req, res) => {
   const {fullName, email, username, password} = req.body
   // console.log("email and password:", email, password)
   /*
-  console.log("req.body sends :",req.body)
-  req.body sends : [Object: null prototype] {
-  fullName: 'Victor Khuraijam',
-  email: 'vk@vk.com',
-  password: '123456789',
-  username: 'chaiaurcode'
-}
-
-  */
+      console.log("req.body sends :",req.body)
+      req.body sends : [Object: null prototype] {
+      fullName: 'Victor Khuraijam',
+      email: 'vk@vk.com',
+      password: '123456789',
+      username: 'chaiaurcode'
+    }
+ */
 
   // if (fullName === ""){
   //   throw new ApiError(400, "fullname is required")
